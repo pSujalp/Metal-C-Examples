@@ -11,5 +11,10 @@ MyMTKViewDelegate::~MyMTKViewDelegate()
 
 void MyMTKViewDelegate::drawInMTKView( MTK::View* pView )
 {
+    Time::Update();
+
+
+
+        
     _pRenderer->draw( pView );
 }

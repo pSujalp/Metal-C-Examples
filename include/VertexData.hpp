@@ -1,27 +1,24 @@
+
 #pragma once
 #include <simd/simd.h>
 
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
+#include <iostream>
+
 using namespace simd;
 
-
-
-struct LightVertexData{
-    float4 position [[position]];
-    float4 normal;
-};
 struct VertexData {
     float4 position;
-    float4 normal;
+    float2 textureCoordinate;
 };
 
-struct TransformationData {
-    float4x4 modelMatrix;
-    float4x4 viewMatrix;
-    float4x4 perspectiveMatrix;
+struct MVP{
+    matrix_float4x4 MVP;
 };
 
-struct OutData {
-    float4 position [[position]];
-    float4 normal;
-    float4 fragmentPosition;
+struct Uniforms
+{   float2 time;
+    int intAsBool;
 };

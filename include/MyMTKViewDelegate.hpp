@@ -4,7 +4,7 @@
 #include <AppKit/AppKit.hpp>
 #include <MetalKit/MetalKit.hpp>
 #include "Renderer.hpp"
-
+#include "Time.hpp"
 
 class MyMTKViewDelegate : public MTK::ViewDelegate
 {
@@ -15,4 +15,7 @@ class MyMTKViewDelegate : public MTK::ViewDelegate
 
     private:
         Renderer* _pRenderer;
+    private:
+        
+        
 };

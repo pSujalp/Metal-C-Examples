@@ -91,6 +91,8 @@ void MyAppDelegate::applicationDidFinishLaunching( NS::Notification* pNotificati
 
     NS::Application* pApp = reinterpret_cast< NS::Application* >( pNotification->object() );
     pApp->activateIgnoringOtherApps( true );
+
+    
 }
 
 bool MyAppDelegate::applicationShouldTerminateAfterLastWindowClosed( NS::Application* pSender )

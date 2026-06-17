@@ -45,9 +45,9 @@ vector_float3 AAPL_SIMD_OVERLOAD generate_random_vector(float min, float max)
     vector_float3 rand;
 
     float range = max - min;
-    rand.x = ((double)random() / (double) (0x7FFFFFFF)) * range + min;
-    rand.y = ((double)random() / (double) (0x7FFFFFFF)) * range + min;
-    rand.z = ((double)random() / (double) (0x7FFFFFFF)) * range + min;
+    rand[0] = ((double)random() / (double) (0x7FFFFFFF)) * range + min;
+    rand[1] = ((double)random() / (double) (0x7FFFFFFF)) * range + min;
+    rand[2] = ((double)random() / (double) (0x7FFFFFFF)) * range + min;
 
     return rand;
 }
@@ -63,7 +63,7 @@ int32_t AAPL_SIMD_OVERLOAD randi(void) {
 }
 
 float AAPL_SIMD_OVERLOAD randf(float x) {
-    return (x * randi() / (float)0x7FFFFFFF);
+    return (x * (float)randi() / (float)0x7FFFFFFF);
 }
 
 float AAPL_SIMD_OVERLOAD degrees_from_radians(float radians) {
@@ -132,15 +132,15 @@ matrix_float4x4 AAPL_SIMD_OVERLOAD matrix_make_columns(
 }
 
 matrix_float3x3 AAPL_SIMD_OVERLOAD matrix3x3_from_quaternion(quaternion_float q) {
-    float xx = q.x * q.x;
-    float xy = q.x * q.y;
-    float xz = q.x * q.z;
-    float xw = q.x * q.w;
-    float yy = q.y * q.y;
-    float yz = q.y * q.z;
-    float yw = q.y * q.w;
-    float zz = q.z * q.z;
-    float zw = q.z * q.w;
+    float xx = q[0] * q[0];
+    float xy = q[0] * q[1];
+    float xz = q[0] * q[2];
+    float xw = q[0] * q[3];
+    float yy = q[1] * q[1];
+    float yz = q[1] * q[2];
+    float yw = q[1] * q[3];
+    float zz = q[2] * q[2];
+    float zw = q[2] * q[3];
 
     // indices are m<column><row>
     float m00 = 1 - 2 * (yy + zz);
@@ -165,7 +165,7 @@ matrix_float3x3 AAPL_SIMD_OVERLOAD matrix3x3_rotation(float radians, vector_floa
     float ct = cosf(radians);
     float st = sinf(radians);
     float ci = 1 - ct;
-    float x = axis.x, y = axis.y, z = axis.z;
+    float x = axis[0], y = axis[1], z = axis[2];
     return matrix_make_rows(    ct + x * x * ci, x * y * ci - z * st, x * z * ci + y * st,
                             y * x * ci + z * st,     ct + y * y * ci, y * z * ci - x * st,
                             z * x * ci - y * st, z * y * ci + x * st,     ct + z * z * ci );
@@ -182,15 +182,15 @@ matrix_float3x3 AAPL_SIMD_OVERLOAD matrix3x3_scale(float sx, float sy, float sz)
 }
 
 matrix_float3x3 AAPL_SIMD_OVERLOAD matrix3x3_scale(vector_float3 s) {
-    return matrix_make_rows(s.x,   0,   0,
-                              0, s.y,   0,
-                              0,   0, s.z);
+    return matrix_make_rows(s[0],   0,   0,
+                              0, s[1],   0,
+                              0,   0, s[2]);
 }
 
 matrix_float3x3 AAPL_SIMD_OVERLOAD matrix3x3_upper_left(matrix_float4x4 m) {
-    vector_float3 x = m.columns[0].xyz;
-    vector_float3 y = m.columns[1].xyz;
-    vector_float3 z = m.columns[2].xyz;
+    vector_float3 x = (vector_float3){ m.columns[0][0], m.columns[0][1], m.columns[0][2] };
+    vector_float3 y = (vector_float3){ m.columns[1][0], m.columns[1][1], m.columns[1][2] };
+    vector_float3 z = (vector_float3){ m.columns[2][0], m.columns[2][1], m.columns[2][2] };
     return matrix_make_columns(x, y, z);
 }
 
@@ -200,15 +200,15 @@ matrix_float3x3 AAPL_SIMD_OVERLOAD matrix_inverse_transpose(matrix_float3x3 m) {
 
 matrix_float4x4 AAPL_SIMD_OVERLOAD matrix4x4_from_quaternion(quaternion_float q) {
 
-    float xx = q.x * q.x;
-    float xy = q.x * q.y;
-    float xz = q.x * q.z;
-    float xw = q.x * q.w;
-    float yy = q.y * q.y;
-    float yz = q.y * q.z;
-    float yw = q.y * q.w;
-    float zz = q.z * q.z;
-    float zw = q.z * q.w;
+    float xx = q[0] * q[0];
+    float xy = q[0] * q[1];
+    float xz = q[0] * q[2];
+    float xw = q[0] * q[3];
+    float yy = q[1] * q[1];
+    float yz = q[1] * q[2];
+    float yw = q[1] * q[3];
+    float zz = q[2] * q[2];
+    float zw = q[2] * q[3];
 
     // indices are m<column><row>
     float m00 = 1 - 2 * (yy + zz);
@@ -235,7 +235,7 @@ matrix_float4x4 AAPL_SIMD_OVERLOAD matrix4x4_rotation(float radians, vector_floa
     float ct = cosf(radians);
     float st = sinf(radians);
     float ci = 1 - ct;
-    float x = axis.x, y = axis.y, z = axis.z;
+    float x = axis[0], y = axis[1], z = axis[2];
     return matrix_make_rows(
                         ct + x * x * ci, x * y * ci - z * st, x * z * ci + y * st, 0,
                     y * x * ci + z * st,     ct + y * y * ci, y * z * ci - x * st, 0,
@@ -262,9 +262,9 @@ matrix_float4x4 AAPL_SIMD_OVERLOAD matrix4x4_scale(float sx, float sy, float sz)
 }
 
 matrix_float4x4 AAPL_SIMD_OVERLOAD matrix4x4_scale(vector_float3 s) {
-    return matrix_make_rows(s.x,   0,   0, 0,
-                              0, s.y,   0, 0,
-                              0,   0, s.z, 0,
+    return matrix_make_rows(s[0],   0,   0, 0,
+                              0, s[1],   0, 0,
+                              0,   0, s[2], 0,
                               0,   0,   0, 1 );
 }
 
@@ -276,16 +276,16 @@ matrix_float4x4 AAPL_SIMD_OVERLOAD matrix4x4_translation(float tx, float ty, flo
 }
 
 matrix_float4x4 AAPL_SIMD_OVERLOAD matrix4x4_translation(vector_float3 t) {
-    return matrix_make_rows(1, 0, 0, t.x,
-                            0, 1, 0, t.y,
-                            0, 0, 1, t.z,
+    return matrix_make_rows(1, 0, 0, t[0],
+                            0, 1, 0, t[1],
+                            0, 0, 1, t[2],
                             0, 0, 0,   1 );
 }
 
 matrix_float4x4 AAPL_SIMD_OVERLOAD matrix4x4_scale_translation(vector_float3 s, vector_float3 t) {
-    return matrix_make_rows(s.x,   0,   0, t.x,
-                              0, s.y,   0, t.y,
-                              0,   0, s.z, t.z,
+    return matrix_make_rows(s[0],   0,   0, t[0],
+                              0, s[1],   0, t[1],
+                              0,   0, s[2], t[2],
                               0,   0,   0,   1 );
 }
 
@@ -298,9 +298,9 @@ matrix_float4x4 AAPL_SIMD_OVERLOAD matrix_look_at_left_hand(vector_float3 eye,
     vector_float3 y = vector_cross(z, x);
     vector_float3 t = vector_make(-vector_dot(x, eye), -vector_dot(y, eye), -vector_dot(z, eye));
 
-    return matrix_make_rows(x.x, x.y, x.z, t.x,
-                            y.x, y.y, y.z, t.y,
-                            z.x, z.y, z.z, t.z,
+    return matrix_make_rows(x[0], x[1], x[2], t[0],
+                            y[0], y[1], y[2], t[1],
+                            z[0], z[1], z[2], t[2],
                               0,   0,   0,   1 );
 }
 
@@ -322,9 +322,9 @@ matrix_float4x4 AAPL_SIMD_OVERLOAD matrix_look_at_right_hand(vector_float3 eye,
     vector_float3 y = vector_cross(z, x);
     vector_float3 t = vector_make(-vector_dot(x, eye), -vector_dot(y, eye), -vector_dot(z, eye));
 
-    return matrix_make_rows(x.x, x.y, x.z, t.x,
-                            y.x, y.y, y.z, t.y,
-                            z.x, z.y, z.z, t.z,
+    return matrix_make_rows(x[0], x[1], x[2], t[0],
+                            y[0], y[1], y[2], t[1],
+                            z[0], z[1], z[2], t[2],
                               0,   0,   0,   1 );
 }
 
@@ -391,45 +391,40 @@ quaternion_float AAPL_SIMD_OVERLOAD quaternion(float x, float y, float z, float 
 }
 
 quaternion_float AAPL_SIMD_OVERLOAD quaternion(vector_float3 v, float w) {
-    return (quaternion_float){ v.x, v.y, v.z, w };
+    return (quaternion_float){ v[0], v[1], v[2], w };
 }
 
-quaternion_float AAPL_SIMD_OVERLOAD quaternion_identity() {
+quaternion_float AAPL_SIMD_OVERLOAD quaternion_identity(void) {
     return quaternion(0, 0, 0, 1);
 }
 
 quaternion_float AAPL_SIMD_OVERLOAD quaternion_from_axis_angle(vector_float3 axis, float radians) {
     float t = radians * 0.5;
-    return quaternion(axis.x * sinf(t), axis.y * sinf(t), axis.z * sinf(t), cosf(t));
+    return quaternion(axis[0] * sinf(t), axis[1] * sinf(t), axis[2] * sinf(t), cosf(t));
 }
 
 quaternion_float AAPL_SIMD_OVERLOAD quaternion_from_euler(vector_float3 euler) {
     quaternion_float q;
 
-    float cx = cosf(euler.x / 2.f);
-    float cy = cosf(euler.y / 2.f);
-    float cz = cosf(euler.z / 2.f);
-    float sx = sinf(euler.x / 2.f);
-    float sy = sinf(euler.y / 2.f);
-    float sz = sinf(euler.z / 2.f);
+    float cx = cosf(euler[0] / 2.f);
+    float cy = cosf(euler[1] / 2.f);
+    float cz = cosf(euler[2] / 2.f);
+    float sx = sinf(euler[0] / 2.f);
+    float sy = sinf(euler[1] / 2.f);
+    float sz = sinf(euler[2] / 2.f);
 
-    q.w = cx * cy * cz + sx * sy * sz;
-    q.x = sx * cy * cz - cx * sy * sz;
-    q.y = cx * sy * cz + sx * cy * sz;
-    q.z = cx * cy * sz - sx * sy * cz;
+    q[3] = cx * cy * cz + sx * sy * sz;
+    q[0] = sx * cy * cz - cx * sy * sz;
+    q[1] = cx * sy * cz + sx * cy * sz;
+    q[2] = cx * cy * sz - sx * sy * cz;
 
     return q;
 }
 
 quaternion_float AAPL_SIMD_OVERLOAD quaternion(matrix_float3x3 m) {
-    float m00 = m.columns[0].x;
-    float m11 = m.columns[1].y;
-    float m22 = m.columns[2].z;
-    float x = sqrtf(1 + m00 - m11 - m22) * 0.5;
-    float y = sqrtf(1 - m00 + m11 - m22) * 0.5;
-    float z = sqrtf(1 - m00 - m11 + m22) * 0.5;
-    float w = sqrtf(1 + m00 + m11 + m22) * 0.5;
-    return quaternion(x, y, z, w);
+    // Use Shepperd's method: pick the largest diagonal term to avoid
+    // computing sqrtf() of a negative number (which yields NaN).
+    return quaternion_from_matrix3x3(m);
 }
 
 quaternion_float AAPL_SIMD_OVERLOAD quaternion(matrix_float4x4 m) {
@@ -437,24 +432,24 @@ quaternion_float AAPL_SIMD_OVERLOAD quaternion(matrix_float4x4 m) {
 }
 
 float AAPL_SIMD_OVERLOAD quaternion_length(quaternion_float q) {
-    //  return sqrt(q.x*q.x + q.y*q.y + q.z*q.z + q.w*q.w);
+    //  return sqrt(q[0]*q[0] + q[1]*q[1] + q[2]*q[2] + q[3]*q[3]);
     return vector_length(q);
 }
 
 float AAPL_SIMD_OVERLOAD quaternion_length_squared(quaternion_float q) {
-    //  return q.x*q.x + q.y*q.y + q.z*q.z + q.w*q.w;
+    //  return q[0]*q[0] + q[1]*q[1] + q[2]*q[2] + q[3]*q[3];
     return vector_length_squared(q);
 }
 
 vector_float3 AAPL_SIMD_OVERLOAD quaternion_axis(quaternion_float q) {
     // This query doesn't make sense if w > 1, but we do our best by
     // forcing q to be a unit quaternion if it obviously isn't
-    if (q.w > 1.0)
+    if (q[3] > 1.0)
     {
         q = quaternion_normalize(q);
     }
 
-    float axisLen = sqrtf(1 - q.w * q.w);
+    float axisLen = sqrtf(1 - q[3] * q[3]);
 
     if (axisLen < 1e-5)
     {
@@ -463,12 +458,12 @@ vector_float3 AAPL_SIMD_OVERLOAD quaternion_axis(quaternion_float q) {
     }
     else
     {
-        return vector_make(q.x / axisLen, q.y / axisLen, q.z / axisLen);
+        return vector_make(q[0] / axisLen, q[1] / axisLen, q[2] / axisLen);
     }
 }
 
 float AAPL_SIMD_OVERLOAD quaternion_angle(quaternion_float q) {
-    return 2 * acosf(q.w);
+    return 2 * acosf(q[3]);
 }
 
 quaternion_float AAPL_SIMD_OVERLOAD quaternion_normalize(quaternion_float q) {
@@ -481,16 +476,16 @@ quaternion_float AAPL_SIMD_OVERLOAD quaternion_inverse(quaternion_float q) {
 }
 
 quaternion_float AAPL_SIMD_OVERLOAD quaternion_conjugate(quaternion_float q) {
-    return quaternion(-q.x, -q.y, -q.z, q.w);
+    return quaternion(-q[0], -q[1], -q[2], q[3]);
 }
 
 quaternion_float AAPL_SIMD_OVERLOAD quaternion_multiply(quaternion_float q0, quaternion_float q1) {
     quaternion_float q;
 
-    q.x = q0.w*q1.x + q0.x*q1.w + q0.y*q1.z - q0.z*q1.y;
-    q.y = q0.w*q1.y - q0.x*q1.z + q0.y*q1.w + q0.z*q1.x;
-    q.z = q0.w*q1.z + q0.x*q1.y - q0.y*q1.x + q0.z*q1.w;
-    q.w = q0.w*q1.w - q0.x*q1.x - q0.y*q1.y - q0.z*q1.z;
+    q[0] = q0[3]*q1[0] + q0[0]*q1[3] + q0[1]*q1[2] - q0[2]*q1[1];
+    q[1] = q0[3]*q1[1] - q0[0]*q1[2] + q0[1]*q1[3] + q0[2]*q1[0];
+    q[2] = q0[3]*q1[2] + q0[0]*q1[1] - q0[1]*q1[0] + q0[2]*q1[3];
+    q[3] = q0[3]*q1[3] - q0[0]*q1[0] - q0[1]*q1[1] - q0[2]*q1[2];
     return q;
 }
 
@@ -498,7 +493,7 @@ quaternion_float AAPL_SIMD_OVERLOAD quaternion_slerp(quaternion_float q0, quater
     quaternion_float q;
 
     float cosHalfTheta = vector_dot(q0, q1);
-    if (fabs(cosHalfTheta) >= 1.f) ///q0=q1 or q0=q1
+    if (fabs(cosHalfTheta) >= 1.f) ///q0=q1 or q0=-q1
     {
         return q0;
     }
@@ -518,8 +513,8 @@ quaternion_float AAPL_SIMD_OVERLOAD quaternion_slerp(quaternion_float q0, quater
 }
 
 vector_float3 AAPL_SIMD_OVERLOAD quaternion_rotate_vector(quaternion_float q, vector_float3 v) {
-    vector_float3 qp = vector_make(q.x, q.y, q.z);
-    float w = q.w;
+    vector_float3 qp = vector_make(q[0], q[1], q[2]);
+    float w = q[3];
     return 2 * vector_dot(qp, v) * qp +
            ((w * w) - vector_dot(qp, qp)) * v +
            2 * w * vector_cross(qp, v);
@@ -535,38 +530,38 @@ quaternion_float AAPL_SIMD_OVERLOAD quaternion_from_matrix3x3(matrix_float3x3 m)
     {
         float diagonal = sqrt(trace) * 2.0;
 
-        q.x = (m.columns[2][1] - m.columns[1][2]) / diagonal;
-        q.y = (m.columns[0][2] - m.columns[2][0]) / diagonal;
-        q.z = (m.columns[1][0] - m.columns[0][1]) / diagonal;
-        q.w = diagonal / 4.0;
+        q[0] = (m.columns[2][1] - m.columns[1][2]) / diagonal;
+        q[1] = (m.columns[0][2] - m.columns[2][0]) / diagonal;
+        q[2] = (m.columns[1][0] - m.columns[0][1]) / diagonal;
+        q[3] = diagonal / 4.0;
 
     }  else if ((m.columns[0][0] > m.columns[1][1] ) &&
                 (m.columns[0][0] > m.columns[2][2])) {
 
         float diagonal = sqrt( 1.0 + m.columns[0][0] - m.columns[1][1] - m.columns[2][2] ) * 2.0;
 
-        q.x = diagonal / 4.0;
-        q.y = (m.columns[0][1] + m.columns[1][0]) / diagonal;
-        q.z = (m.columns[0][2] + m.columns[2][0]) / diagonal;
-        q.w = (m.columns[2][1] - m.columns[1][2]) / diagonal;
+        q[0] = diagonal / 4.0;
+        q[1] = (m.columns[0][1] + m.columns[1][0]) / diagonal;
+        q[2] = (m.columns[0][2] + m.columns[2][0]) / diagonal;
+        q[3] = (m.columns[2][1] - m.columns[1][2]) / diagonal;
 
     } else if ( m.columns[1][1] > m.columns[2][2]) {
 
         float diagonal = sqrt(1.0 + m.columns[1][1] - m.columns[0][0] - m.columns[2][2]) * 2.0;
 
-        q.x = (m.columns[0][1] + m.columns[1][0]) / diagonal;
-        q.y = diagonal / 4.0;
-        q.z = (m.columns[1][2] + m.columns[2][1]) / diagonal;
-        q.w = (m.columns[0][2] - m.columns[2][0]) / diagonal;
+        q[0] = (m.columns[0][1] + m.columns[1][0]) / diagonal;
+        q[1] = diagonal / 4.0;
+        q[2] = (m.columns[1][2] + m.columns[2][1]) / diagonal;
+        q[3] = (m.columns[0][2] - m.columns[2][0]) / diagonal;
 
     } else {
 
         float diagonal = sqrt(1.0 + m.columns[2][2] - m.columns[0][0] - m.columns[1][1]) * 2.0;
 
-        q.x = (m.columns[0][2] + m.columns[2][0]) / diagonal;
-        q.y = (m.columns[1][2] + m.columns[2][1]) / diagonal;
-        q.z = diagonal / 4.0;
-        q.w = (m.columns[1][0] - m.columns[0][1]) / diagonal;
+        q[0] = (m.columns[0][2] + m.columns[2][0]) / diagonal;
+        q[1] = (m.columns[1][2] + m.columns[2][1]) / diagonal;
+        q[2] = diagonal / 4.0;
+        q[3] = (m.columns[1][0] - m.columns[0][1]) / diagonal;
     }
 
     q = quaternion_normalize(q);
@@ -585,8 +580,13 @@ static inline quaternion_float AAPL_SIMD_OVERLOAD quaternion_from_direction_vect
     quaternion_float q = quaternion_from_matrix3x3(m);
 
     if(right_handed) {
-        q = q.yxwz;
-        q.xw = -q.xw;
+        // Swap (x,y) and (z,w), then negate x and w
+        quaternion_float qr;
+        qr[0] = -q[1];
+        qr[1] =  q[0];
+        qr[2] = -q[3];
+        qr[3] =  q[2];
+        q = qr;
     }
 
     q = vector_normalize(q);
@@ -606,9 +606,9 @@ quaternion_float AAPL_SIMD_OVERLOAD quaternion_from_direction_vectors_left_hand(
 
 vector_float3 AAPL_SIMD_OVERLOAD forward_direction_vector_from_quaternion(quaternion_float q) {
     vector_float3 direction;
-    direction.x = 2.0 * (q.x*q.z - q.w*q.y);
-    direction.y = 2.0 * (q.y*q.z + q.w*q.x);
-    direction.z = 1.0 - 2.0 * ((q.x * q.x) + (q.y * q.y));
+    direction[0] = 2.0 * (q[0]*q[2] - q[3]*q[1]);
+    direction[1] = 2.0 * (q[1]*q[2] + q[3]*q[0]);
+    direction[2] = 1.0 - 2.0 * ((q[0] * q[0]) + (q[1] * q[1]));
 
     direction = vector_normalize(direction);
     return direction;
@@ -616,9 +616,9 @@ vector_float3 AAPL_SIMD_OVERLOAD forward_direction_vector_from_quaternion(quater
 
 vector_float3 AAPL_SIMD_OVERLOAD up_direction_vector_from_quaternion(quaternion_float q) {
     vector_float3 direction;
-    direction.x = 2.0 * (q.x*q.y + q.w*q.z);
-    direction.y = 1.0 - 2.0 * (q.x*q.x + q.z*q.z);
-    direction.z = 2.0 * (q.y*q.z - q.w*q.x);
+    direction[0] = 2.0 * (q[0]*q[1] + q[3]*q[2]);
+    direction[1] = 1.0 - 2.0 * (q[0]*q[0] + q[2]*q[2]);
+    direction[2] = 2.0 * (q[1]*q[2] - q[3]*q[0]);
 
     direction = vector_normalize(direction);
     // Negate for a right-handed coordinate system
@@ -627,9 +627,9 @@ vector_float3 AAPL_SIMD_OVERLOAD up_direction_vector_from_quaternion(quaternion_
 
 vector_float3 AAPL_SIMD_OVERLOAD right_direction_vector_from_quaternion(quaternion_float q) {
     vector_float3 direction;
-    direction.x = 1.0 - 2.0 * (q.y * q.y + q.z * q.z);
-    direction.y = 2.0 * (q.x * q.y - q.w * q.z);
-    direction.z = 2.0 * (q.x * q.z + q.w * q.y);
+    direction[0] = 1.0 - 2.0 * (q[1] * q[1] + q[2] * q[2]);
+    direction[1] = 2.0 * (q[0] * q[1] - q[3] * q[2]);
+    direction[2] = 2.0 * (q[0] * q[2] + q[3] * q[1]);
 
     direction = vector_normalize(direction);
     // Negate for a right-handed coordinate system

@@ -1,11 +1,18 @@
 #pragma once 
+
 #include <Metal/Metal.hpp>
 #include <AppKit/AppKit.hpp>
 #include <MetalKit/MetalKit.hpp>
-#include "Shader.h"
-#include "VertexData.hpp"
 #include "simd/simd.h"
+#include "VertexData.hpp"
+#include "Texture.hpp"
 #include "AAPLMathUtilities.h"
+#include "Time.hpp"
+
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
+#include <iostream>
 
 class Renderer
 {
@@ -14,24 +21,25 @@ class Renderer
         ~Renderer();
         void draw( MTK::View* pView );
     
-        void createBuffers();
+        void createSquare();
         void buildShaders();
-        void CreateCubeAndLight();
-        void createDefaultLibrary();
-        void createLightSourceRenderPipeline();
+        void createDefaultLibrary(MTL::Device* pDevice );
+        void CreateCube();
+
 
     private:
-        MTL::Library* metalDefaultLibrary;
         MTL::Device* _pDevice;
         MTL::CommandQueue* _pCommandQueue;
         MTL::RenderPipelineState* _pPSO;
-        MTL::RenderPipelineState* metalLightSourceRenderPSO;
-        MTL::Buffer* cubeVertexBuffer;
-        MTL::Buffer* lightVertexBuffer;
-        MTL::Buffer * cubeTransformationBuffer ;
-        MTL::Buffer* lightTransformationBuffer;
-        MTL::RenderPipelineState* metalRenderPSO;
+        Texture* grassTexture;
+        MTL::Buffer* squareVertexBuffer;
+        MTL::Buffer* UniformBuffer;
+        MTL::Buffer* transformationBuffer;
+        MTL::Buffer* transformationCubeBuffer;
+        MTL::Buffer * cubeVertexBuffer;
+        MTL::Library * metallibrary;
         MTL::DepthStencilState* depthStencilState;
-        float _time = 0.0f;
+        
 
+       
 };
