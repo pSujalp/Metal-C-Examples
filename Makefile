@@ -16,24 +16,17 @@ OBJ := $(patsubst src/%.c,build/%.c.o,$(SRC_C)) $(patsubst src/%.cpp,build/%.cpp
 
 .DEFAULT_GOAL := all
 
-.PHONY: all clean run copy-shaders copy-assets
+.PHONY: all clean run
 .SECONDARY:
 
 all: $(TARGET)
 
-build/shaders/%: shaders/%
+build/shaders/shaders.metal: shaders/shaders.metal
 	mkdir -p $(dir $@)
 	cp $< $@
 
-build/assets/%: assets/%
-	mkdir -p $(dir $@)
-	cp $< $@
-
-copy-shaders: build/shaders/square.metal
-copy-assets: build/assets/mc_grass.jpeg
-
-$(TARGET): $(OBJ) copy-shaders copy-assets
-	$(CXX) $(CXXFLAGS) $(OBJ) $(LDFLAGS) -o $@
+$(TARGET): $(OBJ) | build/shaders/shaders.metal
+	$(CXX) $(CXXFLAGS) $^ $(LDFLAGS) -o $@
 
 build/%.c.o: src/%.c
 	mkdir -p $(dir $@)
@@ -48,7 +41,7 @@ build/%.mm.o: src/%.mm
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c $< -o $@
 
 run: $(TARGET)
-	cd build && ./metal
+	./$(TARGET)
 
 clean:
 	rm -rf build

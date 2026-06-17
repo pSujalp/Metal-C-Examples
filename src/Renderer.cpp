@@ -1,114 +1,46 @@
 #include "Renderer.hpp"
-#include "VertexData.hpp"
 #include "Shader.h"
 
 
-Renderer::Renderer(MTL::Device* pDevice)
-: _pDevice(pDevice->retain())
+Renderer::Renderer( MTL::Device* pDevice )
+: _pDevice( pDevice->retain() )
 {
-    __builtin_printf("Step 1: creating command queue\n");
     _pCommandQueue = _pDevice->newCommandQueue();
-
-    __builtin_printf("Step 2: createDefaultLibrary\n");
-    createDefaultLibrary(pDevice);
-
-    __builtin_printf("Step 3: buildShaders\n");
     buildShaders();
-
-    __builtin_printf("Step 4: createSquare\n");
-    createSquare();
-
-    __builtin_printf("Step 5: constructor done\n");
+    buildBuffers();
 }
 
 Renderer::~Renderer()
 {
-    squareVertexBuffer->release();
-    delete grassTexture;
+    _pVertexPositionsBuffer->release();
+    _pVertexColorsBuffer->release();
     _pPSO->release();
     _pCommandQueue->release();
     _pDevice->release();
 }
 
-void Renderer::createDefaultLibrary(MTL::Device* pDevice) {
-    using NS::StringEncoding::UTF8StringEncoding;
-
-    // Step 1: Check working directory
-    char cwd[1024];
-    getcwd(cwd, sizeof(cwd));
-    __builtin_printf("CWD: %s\n", cwd);
-
-    // Step 2: Check shader source loaded
-    Shader sh;
-    const char* shadersrc = sh.GetShader("shaders/square.metal");
-    if (!shadersrc) {
-        __builtin_printf("ERROR: GetShader returned null — file not found\n");
-        assert(false);
-    }
-    __builtin_printf("Shader source loaded, first 100 chars:\n%.100s\n", shadersrc);
-
-    // Step 3: Compile
-    NS::Error* pError = nullptr;
-    metallibrary = pDevice->newLibrary(
-        NS::String::string(shadersrc, UTF8StringEncoding), nullptr, &pError
-    );
-
-    if (!metallibrary) {
-        __builtin_printf("Compile FAILED: %s\n",
-            pError->localizedDescription()->utf8String());
-        assert(false);
-    }
-    __builtin_printf("Library compiled OK\n");
-
-    // Step 4: List all functions in the library
-    NS::Array* fnames = metallibrary->functionNames();
-    __builtin_printf("Function count: %lu\n", fnames->count());
-    for (uint32_t i = 0; i < fnames->count(); ++i) {
-        __builtin_printf("  fn: %s\n", ((NS::String*)fnames->object(i))->utf8String());
-    }
-}
 void Renderer::buildShaders()
 {
     using NS::StringEncoding::UTF8StringEncoding;
 
-    NS::Error* pError = nullptr;
+    Shader sh;
+    const char * shadersrc = sh.GetShader("shaders/shaders.metal");
 
-    MTL::Function* vertexShader = metallibrary->newFunction(NS::String::string("vertexShader", NS::ASCIIStringEncoding));
-    if (!vertexShader)
+    NS::Error* pError = nullptr;
+    MTL::Library* pLibrary = _pDevice->newLibrary( NS::String::string(shadersrc, UTF8StringEncoding), nullptr, &pError );
+    if ( !pLibrary )
     {
-        __builtin_printf("ERROR: vertex function 'vertexShader' not found in library.\n");
-        NS::Array* fnames = metallibrary->functionNames();
-        if (fnames)
-        {
-            for (uint32_t i = 0; i < fnames->count(); ++i)
-            {
-                NS::String* n = (NS::String*)fnames->object(i);
-                __builtin_printf(" available: %s\n", n->utf8String());
-            }
-        }
-        assert(false);
+        __builtin_printf( "%s", pError->localizedDescription()->utf8String() );
+        assert( false );
     }
-    MTL::Function* fragmentShader = metallibrary->newFunction(NS::String::string("fragmentShader", NS::ASCIIStringEncoding));
-    if (!fragmentShader)
-    {
-        __builtin_printf("ERROR: fragment function 'fragmentShader' not found in library.\n");
-        NS::Array* fnames = metallibrary->functionNames();
-        if (fnames)
-        {
-            for (uint32_t i = 0; i < fnames->count(); ++i)
-            {
-                NS::String* n = (NS::String*)fnames->object(i);
-                __builtin_printf(" available: %s\n", n->utf8String());
-            }
-        }
-        assert(false);
-    }
+
+    MTL::Function* pVertexFn = pLibrary->newFunction( NS::String::string("vertexMain", UTF8StringEncoding) );
+    MTL::Function* pFragFn = pLibrary->newFunction( NS::String::string("fragmentMain", UTF8StringEncoding) );
 
     MTL::RenderPipelineDescriptor* pDesc = MTL::RenderPipelineDescriptor::alloc()->init();
-    pDesc->setVertexFunction( vertexShader );
-    pDesc->setFragmentFunction( fragmentShader);
+    pDesc->setVertexFunction( pVertexFn );
+    pDesc->setFragmentFunction( pFragFn );
     pDesc->colorAttachments()->object(0)->setPixelFormat( MTL::PixelFormat::PixelFormatBGRA8Unorm_sRGB );
-
 
     _pPSO = _pDevice->newRenderPipelineState( pDesc, &pError );
     if ( !_pPSO )
@@ -117,87 +49,57 @@ void Renderer::buildShaders()
         assert( false );
     }
 
-    UniformBuffer =_pDevice->newBuffer(sizeof(Uniforms),MTL::ResourceStorageModeShared);
-    Uniform1Buffer =_pDevice->newBuffer(sizeof(Uniforms),MTL::ResourceStorageModeShared);
-
-    fragmentShader->release();
-    vertexShader->release();
+    pVertexFn->release();
+    pFragFn->release();
     pDesc->release();
-    
+    pLibrary->release();
 }
 
-void Renderer::createSquare() {
+void Renderer::buildBuffers()
+{
+    const size_t NumVertices = 3;
 
-    VertexData squareVertices[] {
-        {{-0.5, -0.5,  0.5, 1.0f}, {0.0f, 0.0f}},
-        {{-0.5,  0.5,  0.5, 1.0f}, {0.0f, 1.0f}},
-        {{ 0.5,  0.5,  0.5, 1.0f}, {1.0f, 1.0f}},
-        {{-0.5, -0.5,  0.5, 1.0f}, {0.0f, 0.0f}},
-        {{ 0.5,  0.5,  0.5, 1.0f}, {1.0f, 1.0f}},
-        {{ 0.5, -0.5,  0.5, 1.0f}, {1.0f, 0.0f}}
+    simd::float3 positions[NumVertices] ={
+        {-0.5f, -0.5f, 0.0f},
+        { 0.5f, -0.5f, 0.0f},
+        { 0.0f,  0.5f, 0.0f}
     };
-    
-    squareVertexBuffer = _pDevice->newBuffer(&squareVertices, sizeof(squareVertices), MTL::ResourceStorageModeShared);
-     __builtin_printf("squareVertexBuffer: %p\n", squareVertexBuffer);
-    grassTexture = new Texture("assets/mc_grass.jpeg", _pDevice);
-    __builtin_printf("grassTexture ptr: %p\n", grassTexture);
-    __builtin_printf("grassTexture->texture: %p\n", grassTexture->texture);
+
+    simd::float3 colors[NumVertices] =
+    {
+        {  1.0, 0.0f, 0.0f },
+        {  0.0f, 1.0, 0.0f },
+        {  0.0f, 0.0f, 1.0 }
+    };
+
+    const size_t positionsDataSize = NumVertices * sizeof( simd::float3 );
+    const size_t colorDataSize = NumVertices * sizeof( simd::float3 );
+
+    MTL::Buffer* pVertexPositionsBuffer = _pDevice->newBuffer( positionsDataSize, MTL::ResourceStorageModeShared );
+    MTL::Buffer* pVertexColorsBuffer = _pDevice->newBuffer( colorDataSize, MTL::ResourceStorageModeShared );
+
+    _pVertexPositionsBuffer = pVertexPositionsBuffer;
+    _pVertexColorsBuffer = pVertexColorsBuffer;
+
+    memcpy( _pVertexPositionsBuffer->contents(), positions, positionsDataSize );
+    memcpy( _pVertexColorsBuffer->contents(), colors, colorDataSize );
 }
-void Renderer::draw(MTK::View* pView)
+
+void Renderer::draw( MTK::View* pView )
 {
     NS::AutoreleasePool* pPool = NS::AutoreleasePool::alloc()->init();
 
-    Uniforms uniforms;
-    Uniforms1 uniforms1;
-
-
-
-
-    uniforms.time = {0.1f,0.3f};
-    uniforms1.intAsBool = 1;
-
-    memcpy(UniformBuffer->contents(),&uniforms,sizeof(Uniforms));
-    memcpy(Uniform1Buffer->contents(),&uniforms1,sizeof(Uniforms1));
-
-    
     MTL::CommandBuffer* pCmd = _pCommandQueue->commandBuffer();
-    if (!pCmd) {
-        __builtin_printf("ERROR: commandBuffer is nil\n");
-        pPool->release();
-        return;
-    }
-
     MTL::RenderPassDescriptor* pRpd = pView->currentRenderPassDescriptor();
-    if (!pRpd) {
-        __builtin_printf("ERROR: currentRenderPassDescriptor is nil\n");
-        pCmd->commit();
-        pPool->release();
-        return;
-    }
+    MTL::RenderCommandEncoder* pEnc = pCmd->renderCommandEncoder( pRpd );
 
-    MTL::RenderCommandEncoder* pEnc = pCmd->renderCommandEncoder(pRpd);
-    if (!pEnc) {
-        __builtin_printf("ERROR: renderCommandEncoder is nil\n");
-        pCmd->commit();
-        pPool->release();
-        return;
-    }
-
-    __builtin_printf("draw OK — encoder created\n");
-
-
-    pEnc->setVertexBuffer(UniformBuffer,0,1);   // index 1
-    pEnc->setVertexBuffer(Uniform1Buffer,0,2);   // index 1
-
-
-    pEnc->setRenderPipelineState(_pPSO);
-    pEnc->setVertexBuffer(squareVertexBuffer, 0, 0);
-    pEnc->setFragmentTexture(grassTexture->texture, 0);
-    pEnc->drawPrimitives(MTL::PrimitiveTypeTriangle, NS::UInteger(0), NS::UInteger(6));
+    pEnc->setRenderPipelineState( _pPSO );
+    pEnc->setVertexBuffer( _pVertexPositionsBuffer, 0, 0 );
+    pEnc->setVertexBuffer( _pVertexColorsBuffer, 0, 1 );
+    pEnc->drawPrimitives( MTL::PrimitiveType::PrimitiveTypeTriangle, NS::UInteger(0), NS::UInteger(3) );
 
     pEnc->endEncoding();
-    pCmd->presentDrawable(pView->currentDrawable());
+    pCmd->presentDrawable( pView->currentDrawable() );
     pCmd->commit();
-
     pPool->release();
 }
