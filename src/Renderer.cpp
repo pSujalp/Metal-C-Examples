@@ -254,9 +254,6 @@ void Renderer::createRenderPipeline() {
 }
 
 void Renderer::createLightSourceRenderPipeline() {
-
-
-
      using NS::StringEncoding::UTF8StringEncoding;
 
     Shader sh;
