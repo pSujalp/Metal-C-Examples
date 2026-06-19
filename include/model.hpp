@@ -21,6 +21,7 @@ public:
     std::vector<Mesh*> meshes;
     TextureArray* textures;
     simd::float4x4 translationMatrix;
+    uint32_t resolveTextureIndex(const aiString& name);
 
 private:
     void loadModel(std::string& filePath);

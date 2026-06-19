@@ -56,12 +56,13 @@ void Model::loadTextures(const aiScene* scene) {
 void Model::mapTextureIndices(aiTextureType textureType, aiMaterial* material, int& textureIndex) {
     for (int j = 0; j < material->GetTextureCount(textureType); j++) {
         aiString textureFileName;
-        if (material->GetTexture(textureType, 0, &textureFileName) == AI_SUCCESS) {
-            // If not mapped yet, map the texture index to the texture name.
-            if (textureIndexMap[textureFileName.C_Str()] == 0) {
-                std::string textureFilePath = baseDirectory + std::string(textureFileName.C_Str());
-                std::cout << textureIndex+1 << ".) " << textureFilePath << std::endl;
-                textureIndexMap[textureFileName.C_Str()] = textureIndex++;
+        if (material->GetTexture(textureType, j, &textureFileName) == AI_SUCCESS) {
+            std::string key = textureFileName.C_Str();
+            // Skip if already mapped
+            if (textureIndexMap.count(key) == 0) {
+                std::string textureFilePath = baseDirectory + key;
+                std::cout << textureIndex + 1 << ".) " << textureFilePath << std::endl;
+                textureIndexMap[key] = textureIndex++;
                 textureFilePaths.push_back(textureFilePath);
             }
         }
@@ -78,52 +79,64 @@ void Model::processNode(aiNode* node, const aiScene* scene) {
         processNode(node->mChildren[i], scene);
     }
 }
-
 Mesh* Model::processMesh(aiMesh* aiMesh, const aiScene* scene) {
     std::vector<Vertex> vertices;
     std::vector<uint32_t> indices;
     std::unordered_map<Vertex, uint32_t> uniqueVertices;
-    
-    // Get texture file names
-    aiString diffuseTextureName, specularTextureName, normalTextureName, emissiveTextureName;
-    aiMaterial* material = scene->mMaterials[aiMesh->mMaterialIndex];
-    material->GetTexture(aiTextureType_DIFFUSE, 0, &diffuseTextureName);
-    material->GetTexture(aiTextureType_SPECULAR, 0, &specularTextureName);
-    material->GetTexture(aiTextureType_HEIGHT, 0, &normalTextureName);
-    material->GetTexture(aiTextureType_EMISSIVE, 0, &emissiveTextureName);
 
-    // Extract Per-Vertex Data
+    aiString diffuseName, specularName, normalName, emissiveName;
+    aiMaterial* material = scene->mMaterials[aiMesh->mMaterialIndex];
+
+    // Only fetch if the slot actually has a texture
+    if (material->GetTextureCount(aiTextureType_DIFFUSE)  > 0)
+        material->GetTexture(aiTextureType_DIFFUSE,  0, &diffuseName);
+    if (material->GetTextureCount(aiTextureType_SPECULAR) > 0)
+        material->GetTexture(aiTextureType_SPECULAR, 0, &specularName);
+    if (material->GetTextureCount(aiTextureType_HEIGHT)   > 0)
+        material->GetTexture(aiTextureType_HEIGHT,   0, &normalName);
+    if (material->GetTextureCount(aiTextureType_EMISSIVE) > 0)
+        material->GetTexture(aiTextureType_EMISSIVE, 0, &emissiveName);
+
+    // Resolve to index or NO_TEXTURE sentinel
+    uint32_t diffuseIdx  = resolveTextureIndex(diffuseName);
+    uint32_t specularIdx = resolveTextureIndex(specularName);
+    uint32_t normalIdx   = resolveTextureIndex(normalName);
+    uint32_t emissiveIdx = resolveTextureIndex(emissiveName);
+
     for (unsigned int i = 0; i < aiMesh->mNumFaces; i++) {
         aiFace face = aiMesh->mFaces[i];
-        
         for (unsigned int j = 0; j < face.mNumIndices; j++) {
-            unsigned int vertexIndex = face.mIndices[j];
-            aiVector3D pos = aiMesh->mVertices[vertexIndex];
-            aiVector3D normal = aiMesh->mNormals[vertexIndex];
-            aiVector3D texCoord = aiMesh->mTextureCoords[0][vertexIndex];
-            aiVector3D tangent = aiMesh->mTangents[vertexIndex];
-            aiVector3D bitangent = aiMesh->mTangents[vertexIndex];
-            
+            unsigned int vi = face.mIndices[j];
+
             Vertex vertex;
-            vertex.position = {pos.x, pos.y, pos.z};
-            vertex.normal = {normal.x, normal.y, normal.z};
-            vertex.textureCoordinate = {texCoord.x, texCoord.y};
-            vertex.tangent = {tangent.x, tangent.y, tangent.z};
-            vertex.bitangent = {bitangent.x, bitangent.y, bitangent.z};
-            vertex.diffuseTextureIndex = {textureIndexMap[diffuseTextureName.C_Str()]};
-            vertex.specularTextureIndex = {textureIndexMap[specularTextureName.C_Str()]};
-            vertex.normalMapIndex = {textureIndexMap[normalTextureName.C_Str()]};
-            vertex.emissiveMapIndex = {textureIndexMap[emissiveTextureName.C_Str()]};
-            // Check if the vertex is unique or not
+            vertex.position          = { aiMesh->mVertices[vi].x,  aiMesh->mVertices[vi].y,  aiMesh->mVertices[vi].z  };
+            vertex.normal            = { aiMesh->mNormals[vi].x,   aiMesh->mNormals[vi].y,   aiMesh->mNormals[vi].z   };
+            vertex.textureCoordinate = { aiMesh->mTextureCoords[0][vi].x, aiMesh->mTextureCoords[0][vi].y };
+            vertex.tangent           = { aiMesh->mTangents[vi].x,  aiMesh->mTangents[vi].y,  aiMesh->mTangents[vi].z  };
+            vertex.bitangent         = { aiMesh->mBitangents[vi].x, aiMesh->mBitangents[vi].y, aiMesh->mBitangents[vi].z }; // ← was mTangents
+
+            vertex.diffuseTextureIndex  = diffuseIdx;
+            vertex.specularTextureIndex = specularIdx;
+            vertex.normalMapIndex       = normalIdx;
+            vertex.emissiveMapIndex     = emissiveIdx;
+
             if (uniqueVertices.count(vertex) == 0) {
                 uniqueVertices[vertex] = static_cast<uint32_t>(vertices.size());
                 vertices.push_back(vertex);
             }
-            // Add the index of the vertex to the indices vector
             indices.push_back(uniqueVertices[vertex]);
         }
     }
-    Mesh* mesh = new Mesh(vertices, indices, device);
-    
-    return mesh;
+    return new Mesh(vertices, indices, device);
+}
+
+
+// Helper at the top of the file (or in model.hpp)
+static constexpr uint32_t NO_TEXTURE = UINT32_MAX;
+
+uint32_t Model::resolveTextureIndex(const aiString& name) {
+    if (name.length == 0) return NO_TEXTURE;
+    auto it = textureIndexMap.find(name.C_Str());
+    if (it == textureIndexMap.end()) return NO_TEXTURE;
+    return it->second;
 }

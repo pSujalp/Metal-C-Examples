@@ -82,6 +82,9 @@ fragment float4 fragmentShader(OutData in [[stage_in]],
                                constant float4x4& modelMatrix [[buffer(5)]],
                                sampler textureSampler [[sampler(6)]])
 {
+    if(textureArray.get_array_size() == 0) {
+        return float4(0.0, 1.0, 0.0, 1.0); // Return red color if texture array is empty
+    }
     // Debugging: Check texture index and texture info values
     if (in.diffuseTextureIndex < 0 || in.diffuseTextureIndex >= textureArray.get_array_size()) {
         return float4(1.0, 0.0, 0.0, 1.0); // Return red color for invalid texture index

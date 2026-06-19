@@ -38,8 +38,10 @@ void Renderer::draw( MTK::View* pView )
     pEnc->setRenderPipelineState(metalRenderPSO);
     pEnc->setDepthStencilState(depthStencilState);
 
-    matrix_float4x4 rotationMatrix = matrix4x4_rotation(45 * (M_PI / 180.0f), 0.0, 1.0, 0.0);
-    matrix_float4x4 modelMatrix    = matrix4x4_translation(0.0f, 0.0f, -15.2f) * rotationMatrix;
+    matrix_float4x4 rotationMatrix = matrix4x4_rotation(60 * (M_PI / 180.0f), 0.0, 1.0, 0.0);
+    matrix_float4x4 scaleMatrix    = matrix4x4_scale(12.01f, 12.01f, 12.01f);
+
+    matrix_float4x4 modelMatrix    = matrix4x4_translation(0.0f, 0.0f, -125.0f) * rotationMatrix * scaleMatrix;
 
     // Fixed view matrix — replace eye/center when you add a camera
     matrix_float4x4 viewMatrix = matrix_look_at_right_hand(
@@ -56,7 +58,7 @@ void Renderer::draw( MTK::View* pView )
     float aspectRatio = (float)(drawableSize.width / drawableSize.height);
     float fov   = 45.0f * (M_PI / 180.0f);
     float nearZ = 0.1f;
-    float farZ  = 100.0f;
+    float farZ  = 1000.0f;
     matrix_float4x4 perspectiveMatrix = matrix_perspective_right_hand(fov, aspectRatio, nearZ, farZ);
 
     MTL::PrimitiveType typeTriangle = MTL::PrimitiveTypeTriangle;
@@ -82,7 +84,7 @@ void Renderer::draw( MTK::View* pView )
     }
 
     // Light source cube
-    matrix_float4x4 scaleMatrix       = matrix4x4_scale(0.3f, 0.3f, 0.3f);
+    scaleMatrix       = matrix4x4_scale(0.3f, 0.3f, 0.3f);
     matrix_float4x4 translationMatrix = matrix4x4_translation(lightPosition[0],
                                                               lightPosition[1],
                                                               lightPosition[2]);
@@ -104,7 +106,7 @@ void Renderer::draw( MTK::View* pView )
 
 void Renderer::loadMeshes()
 {
-    std::string modelPath = "build/assets/backpack/backpack.obj";
+    std::string modelPath = "build/assets/SMG/smg.obj";
     model = new Model(modelPath, _pDevice);
 
     VertexData lightSource[] = {
