@@ -104,7 +104,8 @@ void Renderer::draw( MTK::View* pView )
 
 void Renderer::loadMeshes()
 {
-    model = new Model("assets/backpack/backpack.obj", _pDevice);
+    std::string modelPath = "build/assets/backpack/backpack.obj";
+    model = new Model(modelPath, _pDevice);
 
     VertexData lightSource[] = {
         // Front face
