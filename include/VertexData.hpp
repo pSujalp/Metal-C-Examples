@@ -9,16 +9,24 @@
 
 using namespace simd;
 
+
+
 struct VertexData {
     float4 position;
     float2 textureCoordinate;
 };
 
-struct MVP{
-    matrix_float4x4 MVP;
+struct MVP {
+    matrix_float4x4 modelViewProjection;
 };
 
-struct Uniforms
-{   float2 time;
-    int intAsBool;
+struct Uniforms {
+    float aspectRatio;
+};
+
+
+struct AAPLVertex {
+    float2 position;
+    float4 color;
+   
 };

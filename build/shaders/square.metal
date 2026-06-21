@@ -48,6 +48,7 @@ vertex AAPLOut vertexRenderPass(uint vertexID [[vertex_id]],
 }
 
 fragment float4 fragmentRenderPass(AAPLOut in [[stage_in]]) {
+    
     return  in.color;
 }
 

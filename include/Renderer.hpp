@@ -39,7 +39,11 @@ class Renderer
         MTL::Buffer * cubeVertexBuffer;
         MTL::Library * metallibrary;
         MTL::DepthStencilState* depthStencilState;
-        
 
-       
+
+        
+        MTL::Texture * _renderTexture;
+        MTL::RenderPassDescriptor* _renderToTextureRenderPassDescriptor;
+        float _aspectRatio;
+        MTL::RenderPipelineState* _renderToTexturePipelineState;
 };

@@ -169,6 +169,52 @@ void Renderer::buildShaders()
     UniformBuffer       = _pDevice->newBuffer(sizeof(Uniforms), MTL::ResourceStorageModeShared);
     transformationBuffer = _pDevice->newBuffer(sizeof(MVP),     MTL::ResourceStorageModeShared);
 
+
+     MTL::TextureDescriptor* texTextureDescriptor = MTL::TextureDescriptor::alloc()->init();
+    texTextureDescriptor->setPixelFormat(MTL::PixelFormat::PixelFormatBGRA8Unorm);
+    texTextureDescriptor->setWidth(512);
+    texTextureDescriptor->setHeight(512);
+    texTextureDescriptor->setStorageMode(MTL::StorageModePrivate);
+    texTextureDescriptor->setUsage(MTL::TextureUsageRenderTarget | MTL::TextureUsageShaderRead);
+    _renderTexture = _pDevice->newTexture(texTextureDescriptor);
+    texTextureDescriptor->release();
+    
+    _renderToTextureRenderPassDescriptor = MTL::RenderPassDescriptor::alloc()->init();
+    _renderToTextureRenderPassDescriptor->colorAttachments()->object(0)->setTexture(_renderTexture);
+    _renderToTextureRenderPassDescriptor->colorAttachments()->object(0)->setLoadAction(MTL::LoadActionClear);
+    _renderToTextureRenderPassDescriptor->colorAttachments()->object(0)->setStoreAction(MTL::StoreActionStore);
+    _renderToTextureRenderPassDescriptor->colorAttachments()->object(0)->setClearColor(MTL::ClearColor(0.0, 0.0, 0.0, 1.0));
+
+
+      vertexShader = metallibrary->newFunction(
+        NS::String::string("vertexRenderPass", NS::ASCIIStringEncoding)
+    );
+    if (!vertexShader) {
+        __builtin_printf("ERROR: vertex function 'vertexShader' not found in library.\n");
+        assert(false);
+    }
+
+    fragmentShader = metallibrary->newFunction(
+        NS::String::string("fragmentRenderPass", NS::ASCIIStringEncoding)
+    );
+    if (!fragmentShader) {
+        __builtin_printf("ERROR: fragment function 'fragmentShader' not found in library.\n");
+        assert(false);
+    }
+   pDesc = MTL::RenderPipelineDescriptor::alloc()->init();
+    pDesc->setVertexFunction(vertexShader);
+    pDesc->setFragmentFunction(fragmentShader);
+    pDesc->colorAttachments()->object(0)->setPixelFormat(
+        _renderTexture->pixelFormat()
+    );
+
+    _renderToTexturePipelineState = _pDevice->newRenderPipelineState(pDesc, &pError);
+    if (!_renderToTexturePipelineState) {
+        __builtin_printf("%s", pError->localizedDescription()->utf8String());
+        assert(false);
+    }
+
+
     fragmentShader->release();
     vertexShader->release();
     pDesc->release();
@@ -178,10 +224,52 @@ void Renderer::draw(MTK::View* pView)
 {
     NS::AutoreleasePool* pPool = NS::AutoreleasePool::alloc()->init();
 
-    
-    Uniforms uniforms;
-    uniforms.time = {0.1f, 0.3f};
+        MTL::CommandBuffer* pCmd = _pCommandQueue->commandBuffer();
+    if (!pCmd) {
+        __builtin_printf("ERROR: commandBuffer is nil\n");
+        pPool->release();
+        return;
+    }
+
+    {
+        MTL::RenderPassDescriptor* pRpd1 = _renderToTextureRenderPassDescriptor; // pView->currentRenderPassDescriptor();
+    if (!pRpd1) {
+        __builtin_printf("ERROR: currentRenderPassDescriptor is nil\n");
+        pCmd->commit();
+        pPool->release();
+        return;
+    }
+
+    MTL::RenderCommandEncoder* pEnc1 = pCmd->renderCommandEncoder(pRpd1);
+    if (!pEnc1) {
+        __builtin_printf("ERROR: renderCommandEncoder is nil\n");
+        pCmd->commit();
+        pPool->release();
+        return;
+    }
+    pEnc1->setRenderPipelineState(_renderToTexturePipelineState);
+
+     Uniforms uniforms;
+    uniforms.aspectRatio = 16.0f/9.0f;
     memcpy(UniformBuffer->contents(), &uniforms, sizeof(Uniforms));
+
+
+    static const AAPLVertex triVertices[] =
+        {
+            // Positions     ,  Colors
+            { {  0.5,  -0.5 },  { 1.0, 0.0, 0.0, 1.0 } },
+            { { -0.5,  -0.5 },  { 0.0, 1.0, 0.0, 1.0 } },
+            { {  0.0,   0.5 },  { 0.0, 0.0, 1.0, 0.0 } },
+        };
+    pEnc1->setVertexBytes(triVertices, sizeof(triVertices), 0);
+    // pEnc1->setVertexBuffer(UniformBuffer,         0, 1);  
+    pEnc1->drawPrimitives(MTL::PrimitiveTypeTriangle, NS::UInteger(0), NS::UInteger(3));
+   pEnc1->endEncoding();
+    }
+    
+
+    
+   
 
     
     
@@ -215,48 +303,42 @@ void Renderer::draw(MTK::View* pView)
     glm::mat4 MVP_GLM = perspectiveMatrix * viewMatrix * model;
 
     MVP mvp1;
-    mvp1.MVP = matrix_float4x4({
+    mvp1.modelViewProjection = matrix_float4x4({
         simd::float4{ MVP_GLM[0][0], MVP_GLM[0][1], MVP_GLM[0][2], MVP_GLM[0][3] },
         simd::float4{ MVP_GLM[1][0], MVP_GLM[1][1], MVP_GLM[1][2], MVP_GLM[1][3] },
         simd::float4{ MVP_GLM[2][0], MVP_GLM[2][1], MVP_GLM[2][2], MVP_GLM[2][3] },
         simd::float4{ MVP_GLM[3][0], MVP_GLM[3][1], MVP_GLM[3][2], MVP_GLM[3][3] },
     });
     memcpy(transformationBuffer->contents(), &mvp1, sizeof(MVP));
-    MTL::CommandBuffer* pCmd = _pCommandQueue->commandBuffer();
-    if (!pCmd) {
-        __builtin_printf("ERROR: commandBuffer is nil\n");
-        pPool->release();
-        return;
-    }
 
-    MTL::RenderPassDescriptor* pRpd = pView->currentRenderPassDescriptor();
-    if (!pRpd) {
+    MTL::RenderPassDescriptor* pRpd2 = pView->currentRenderPassDescriptor();
+    if (!pRpd2) {
         __builtin_printf("ERROR: currentRenderPassDescriptor is nil\n");
         pCmd->commit();
         pPool->release();
         return;
     }
 
-    MTL::RenderCommandEncoder* pEnc = pCmd->renderCommandEncoder(pRpd);
-    if (!pEnc) {
+    MTL::RenderCommandEncoder* pEnc2 = pCmd->renderCommandEncoder(pRpd2);
+    if (!pEnc2) {
         __builtin_printf("ERROR: renderCommandEncoder is nil\n");
         pCmd->commit();
         pPool->release();
         return;
     }
 
-    pEnc->setRenderPipelineState(_pPSO);
-    pEnc->setDepthStencilState(depthStencilState);
+    pEnc2->setRenderPipelineState(_pPSO);
+    pEnc2->setDepthStencilState(depthStencilState);
 
-    pEnc->setVertexBuffer(cubeVertexBuffer,      0, 0);  
-    pEnc->setVertexBuffer(UniformBuffer,         0, 1);  
-    pEnc->setVertexBuffer(transformationBuffer,  0, 2);  
+    pEnc2->setVertexBuffer(cubeVertexBuffer,      0, 0);  
+    
+    pEnc2->setVertexBuffer(transformationBuffer,  0, 1);  
 
-    pEnc->setFragmentTexture(grassTexture->texture, 0);
+    pEnc2->setFragmentTexture(grassTexture->texture, 0);
 
-    pEnc->drawPrimitives(MTL::PrimitiveTypeTriangle, NS::UInteger(0), NS::UInteger(36));
+    pEnc2->drawPrimitives(MTL::PrimitiveTypeTriangle, NS::UInteger(0), NS::UInteger(36));
 
-    pEnc->endEncoding();
+    pEnc2->endEncoding();
     pCmd->presentDrawable(pView->currentDrawable());
     pCmd->commit();
 
