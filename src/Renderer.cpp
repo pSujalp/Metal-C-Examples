@@ -172,6 +172,27 @@ void Renderer::draw(MTK::View* pView)
     NS::AutoreleasePool* pPool = NS::AutoreleasePool::alloc()->init();
     MTL::CommandBuffer* pCmd = _pCommandQueue->commandBuffer();
 
+
+    {
+        MTL::RenderPassDescriptor* pRpd2 = pView->currentRenderPassDescriptor();
+        MTL::RenderCommandEncoder* pEnc2 = pCmd->renderCommandEncoder(pRpd2);
+        pEnc2->setRenderPipelineState(_pPSO);
+
+        static const AAPLVertex quadVertices[] = {
+            {{-1.0, -1.0}, {0.0, 0.0, 0.0, 1.0}, {0.0, 1.0}},
+            {{ 1.0, -1.0}, {1.0, 0.0, 0.0, 1.0}, {1.0, 1.0}},
+            {{ 1.0,  1.0}, {1.0, 1.0, 0.0, 1.0}, {1.0, 0.0}},
+            {{ 1.0,  1.0}, {1.0, 1.0, 0.0, 1.0}, {1.0, 0.0}},
+            {{-1.0,  1.0}, {0.0, 1.0, 0.0, 1.0}, {0.0, 0.0}},
+            {{-1.0, -1.0}, {0.0, 0.0, 0.0, 1.0}, {0.0, 1.0}},
+        };
+        pEnc2->setVertexBytes(quadVertices, sizeof(quadVertices), 0);
+        pEnc2->setFragmentTexture(_renderTexture, 0);
+        pEnc2->drawPrimitives(MTL::PrimitiveTypeTriangle, NS::UInteger(0), NS::UInteger(6));
+        pEnc2->endEncoding();
+    }
+
+
     
     {
         glm::mat4 model = glm::mat4(1.0f);
@@ -215,25 +236,7 @@ memcpy(transformationBuffer->contents(), &mvp1, sizeof(MVP));
     }
 
     
-    {
-        MTL::RenderPassDescriptor* pRpd2 = pView->currentRenderPassDescriptor();
-        MTL::RenderCommandEncoder* pEnc2 = pCmd->renderCommandEncoder(pRpd2);
-        pEnc2->setRenderPipelineState(_pPSO);
-
-        static const AAPLVertex quadVertices[] = {
-            {{-1.0, -1.0}, {0.0, 0.0, 0.0, 1.0}, {0.0, 1.0}},
-            {{ 1.0, -1.0}, {1.0, 0.0, 0.0, 1.0}, {1.0, 1.0}},
-            {{ 1.0,  1.0}, {1.0, 1.0, 0.0, 1.0}, {1.0, 0.0}},
-            {{ 1.0,  1.0}, {1.0, 1.0, 0.0, 1.0}, {1.0, 0.0}},
-            {{-1.0,  1.0}, {0.0, 1.0, 0.0, 1.0}, {0.0, 0.0}},
-            {{-1.0, -1.0}, {0.0, 0.0, 0.0, 1.0}, {0.0, 1.0}},
-        };
-        pEnc2->setVertexBytes(quadVertices, sizeof(quadVertices), 0);
-        pEnc2->setFragmentTexture(_renderTexture, 0);
-        pEnc2->drawPrimitives(MTL::PrimitiveTypeTriangle, NS::UInteger(0), NS::UInteger(6));
-        pEnc2->endEncoding();
-    }
-
+    
     pCmd->presentDrawable(pView->currentDrawable());
     pCmd->commit();
     pPool->release();
