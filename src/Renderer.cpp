@@ -186,8 +186,6 @@ void Renderer::buildShaders()
         __builtin_printf("%s", pError->localizedDescription()->utf8String());
         assert(false);
     }
-
-
     
 
     fragmentShader->release();
