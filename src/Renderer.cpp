@@ -292,6 +292,7 @@ void Renderer::draw(MTK::View* pView)
         simd::float4{ MVP_GLM[2][0], MVP_GLM[2][1], MVP_GLM[2][2], MVP_GLM[2][3] },
         simd::float4{ MVP_GLM[3][0], MVP_GLM[3][1], MVP_GLM[3][2], MVP_GLM[3][3] },
     });
+    
     memcpy(transformationBuffer->contents(), &mvp1, sizeof(MVP));
 
     

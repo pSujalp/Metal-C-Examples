@@ -1,12 +1,12 @@
-//
-//  Texture.cpp
-//  Metal-Tutorial
-//
+
+
+
+
 
 #include <simd/simd.h>
 #include "Texture.hpp"
 
-// ── 2-D texture (unchanged) ──────────────────────────────────────────────────
+
 Texture::Texture(const char* filepath, MTL::Device* metalDevice) {
     device = metalDevice;
 
@@ -31,7 +31,7 @@ Texture::~Texture() {
     texture->release();
 }
 
-// ── Cubemap texture ───────────────────────────────────────────────────────────
+
 CubeTexture::CubeTexture(const char* facePaths[6], MTL::Device* metalDevice) {
     device = metalDevice;
 
@@ -73,8 +73,8 @@ CubeTexture::CubeTexture(const char* facePaths[6], MTL::Device* metalDevice) {
     for (int slice = 0; slice < 6; ++slice) {
         texture->replaceRegion(
             MTL::Region(0, 0, 0, faceSize, faceSize, 1),
-            /*mipmapLevel=*/0,
-            /*slice=*/slice,
+           0,
+           slice,
             faces[slice],
             bytesPerRow,
             bytesPerImage
