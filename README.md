@@ -22,12 +22,13 @@
 
 
 # Metal-CPP-Examples Branches
-
+  
+- [Basic_Window](https://github.com/pSujalp/Metal-CPP-Examples/tree/Basic_Window)
+- [Calculation_on_GPUs](https://github.com/pSujalp/Metal-CPP-Examples/tree/Calculation_on_GPUs)
+- [Triangle](https://github.com/pSujalp/Metal-CPP-Examples/tree/Triangle)
 - [2D_sprite](https://github.com/pSujalp/Metal-CPP-Examples/tree/2D_sprite)
 - [3D](https://github.com/pSujalp/Metal-CPP-Examples/tree/3D)
 - [ASSIMP_Model](https://github.com/pSujalp/Metal-CPP-Examples/tree/ASSIMP_Model)
-- [Basic_Window](https://github.com/pSujalp/Metal-CPP-Examples/tree/Basic_Window)
-- [Calculation_on_GPUs](https://github.com/pSujalp/Metal-CPP-Examples/tree/Calculation_on_GPUs)
 - [Gamma_Correction](https://github.com/pSujalp/Metal-CPP-Examples/tree/Gamma_Correction)
 - [Instancing](https://github.com/pSujalp/Metal-CPP-Examples/tree/Instancing)
 - [MSAA_using_ASSIMP_Models](https://github.com/pSujalp/Metal-CPP-Examples/tree/MSAA_using_ASSIMP_Models)
@@ -39,5 +40,5 @@
 - [SkyBox](https://github.com/pSujalp/Metal-CPP-Examples/tree/SkyBox)
 - [Textures](https://github.com/pSujalp/Metal-CPP-Examples/tree/Textures)
 - [Transparency](https://github.com/pSujalp/Metal-CPP-Examples/tree/Transparency)
-- [Triangle](https://github.com/pSujalp/Metal-CPP-Examples/tree/Triangle)
+
 - [main](https://github.com/pSujalp/Metal-CPP-Examples/tree/main)
