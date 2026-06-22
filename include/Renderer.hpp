@@ -27,11 +27,11 @@ class Renderer
         MTL::CommandQueue* _pCommandQueue;
         MTL::RenderPipelineState* _pPSO;
         Texture* grassTexture;
+        Texture* smileyTexture;
         MTL::Buffer* squareVertexBuffer;
         MTL::Buffer* UniformBuffer;
         MTL::Buffer* Uniform1Buffer;
         MTL::Library * metallibrary;
-        std::vector<Texture*> textures;
         uint8_t frameCount = 0;
 
 };

@@ -30,9 +30,12 @@ build/assets/%: assets/%
 	cp $< $@
 
 copy-shaders: build/shaders/square.metal
-copy-assets: build/assets/grass.png
+copy-awesomeface: build/assets/awesomeface.png
+copy-container : build/assets/container.jpg
 
-$(TARGET): $(OBJ) copy-shaders copy-assets
+
+
+$(TARGET): $(OBJ) copy-shaders copy-awesomeface copy-container
 	$(CXX) $(CXXFLAGS) $(OBJ) $(LDFLAGS) -o $@
 
 build/%.c.o: src/%.c

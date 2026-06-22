@@ -140,11 +140,12 @@ void Renderer::createSquare() {
     squareVertexBuffer = _pDevice->newBuffer(&squareVertices, sizeof(squareVertices), MTL::ResourceStorageModeShared);
      __builtin_printf("squareVertexBuffer: %p\n", squareVertexBuffer);
 
-     grassTexture = new Texture("assets/grass.png", _pDevice);
+    grassTexture = new Texture("assets/container.jpg", _pDevice);
+    smileyTexture = new Texture("assets/awesomeface.png",_pDevice);
 
-    textures.emplace_back(new Texture("assets/captain/Attack 2 01.png", _pDevice));
-    textures.emplace_back(new Texture("assets/captain/Attack 2 02.png", _pDevice));
-    textures.emplace_back(new Texture("assets/captain/Attack 2 03.png", _pDevice));
+    // textures.emplace_back(new Texture("assets/captain/Attack 2 01.png", _pDevice));
+    // textures.emplace_back(new Texture("assets/captain/Attack 2 02.png", _pDevice));
+    // textures.emplace_back(new Texture("assets/captain/Attack 2 03.png", _pDevice));
 }
 void Renderer::draw(MTK::View* pView)
 {
@@ -190,12 +191,17 @@ void Renderer::draw(MTK::View* pView)
 
 
     pEnc->setRenderPipelineState(_pPSO);
+
     pEnc->setVertexBuffer(squareVertexBuffer, 0, 0);
 
+    
+    pEnc->setFragmentTexture(grassTexture->texture,0);
+    pEnc->setFragmentTexture(smileyTexture->texture,1);
 
-    pEnc->setFragmentTexture(textures[(++frameCount)%3]->texture, 0);
 
-    std::this_thread::sleep_for(std::chrono::milliseconds(300));
+    
+
+    // std::this_thread::sleep_for(std::chrono::milliseconds(300));
   
 
 

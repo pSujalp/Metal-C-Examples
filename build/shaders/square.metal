@@ -52,13 +52,11 @@ vertex VertexOut vertexShader(uint vertexID [[vertex_id]],
 }
 
 fragment float4 fragmentShader(VertexOut in [[stage_in]],
-                               texture2d<float> colorTexture [[texture(0)]]) {
-    constexpr sampler textureSampler (mag_filter::nearest,
-                                      min_filter::nearest);
-
+                               texture2d<float> colorTexture [[texture(0)]],
+                               texture2d<float> colorTexture1 [[texture(1)]]) {
+    constexpr sampler textureSampler (mag_filter::linear,
+                                      min_filter::linear);
     const float4 colorSample = colorTexture.sample(textureSampler, in.textureCoordinate);
-    if(colorSample.a < 0.1) {
-        discard_fragment();
-    }
-    return colorSample;
+    const float4 colorSample1 = colorTexture1.sample(textureSampler, in.textureCoordinate);
+    return mix(colorSample,colorSample1,0.10f);
 }
