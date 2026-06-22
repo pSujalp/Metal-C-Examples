@@ -3,6 +3,7 @@
 #include "Shader.h"
 
 
+
 Renderer::Renderer(MTL::Device* pDevice)
 : _pDevice(pDevice->retain())
 {
@@ -18,6 +19,9 @@ Renderer::Renderer(MTL::Device* pDevice)
     __builtin_printf("Step 4: CreateCube\n");
     CreateCube();
 
+
+    _semaphore = dispatch_semaphore_create( Renderer::kMaxFramesInFlight );
+
     __builtin_printf("Step 5: constructor done\n");
 }
 
@@ -28,7 +32,7 @@ Renderer::~Renderer()
     _pPSO->release();
     depthStencilState->release();
     UniformBuffer->release();
-    transformationBuffer->release();
+
     _pCommandQueue->release();
     _pDevice->release();
 }
@@ -122,6 +126,23 @@ void Renderer::CreateCube() {
         &cubeVertices, sizeof(cubeVertices), MTL::ResourceStorageModeShared
     );
     grassTexture = new Texture("assets/mc_grass.jpeg", _pDevice);
+
+    instancePositions.resize(kNumInstances);
+    float radius = 500.0f;
+    for (size_t i = 0; i < kNumInstances; ++i)
+    {
+        float angle = (2.0f * M_PI * i) / kNumInstances;
+        instancePositions[i] = glm::vec3(
+            radius * cosf(angle),
+            0.0f,
+            radius * sinf(angle)
+        );
+    }
+
+    
+    const size_t instanceDataSize = kNumInstances * sizeof(MVP);
+    for (size_t i = 0; i < kMaxFramesInFlight; ++i)
+        _pInstanceDataBuffer[i] = _pDevice->newBuffer(instanceDataSize, MTL::ResourceStorageModeShared);
 }
 
 void Renderer::buildShaders()
@@ -166,99 +187,83 @@ void Renderer::buildShaders()
         assert(false);
     }
 
-    UniformBuffer       = _pDevice->newBuffer(sizeof(Uniforms), MTL::ResourceStorageModeShared);
-    transformationBuffer = _pDevice->newBuffer(sizeof(MVP),     MTL::ResourceStorageModeShared);
+
+    
 
     fragmentShader->release();
     vertexShader->release();
     pDesc->release();
 }
-
 void Renderer::draw(MTK::View* pView)
 {
     NS::AutoreleasePool* pPool = NS::AutoreleasePool::alloc()->init();
 
-    
-    Uniforms uniforms;
-    uniforms.time = {0.1f, 0.3f};
-    memcpy(UniformBuffer->contents(), &uniforms, sizeof(Uniforms));
-
-    
-    
-    glm::mat4 model = glm::mat4(1.0f);
-    model = glm::translate(model, glm::vec3(0.0f, 1.0f, -1.0f));
-    model = glm::scale(model, glm::vec3(1.0f, 1.0f, 1.0f));
+    _frame = (_frame + 1) % Renderer::kMaxFramesInFlight;
+    MTL::Buffer* pInstanceDataBuffer = _pInstanceDataBuffer[_frame];
 
     
     static float accumulatedDegrees = 0.0f;
-    const float rotationSpeedDegreesPerSecond = 45.0f;
-    accumulatedDegrees += rotationSpeedDegreesPerSecond * Time::DeltaTime;
-    if (accumulatedDegrees >= 360.0f)
-        accumulatedDegrees -= 360.0f;
+    accumulatedDegrees += 45.0f * Time::DeltaTime;
+    if (accumulatedDegrees >= 360.0f) accumulatedDegrees -= 360.0f;
+    float angleInRadians = glm::radians(accumulatedDegrees);
 
-    
-    float angleInRadians = accumulatedDegrees * (M_PI / 180.0f);
-    model = glm::rotate(model, angleInRadians, glm::vec3(0.0f, 1.0f, 0.0f));
     glm::mat4 viewMatrix = glm::lookAt(
-        glm::vec3(0.0f, 0.0f,  5.0f),   
-        glm::vec3(0.0f, 0.0f,  0.0f),   
-        glm::vec3(0.0f, 1.0f,  0.0f)    
+        glm::vec3(0.0f, 400.0f, 800.0f),
+        glm::vec3(0.0f, 0.0f,   0.0f),
+        glm::vec3(0.0f, 1.0f,   0.0f)
     );
 
-    
     auto drawableSize = pView->drawableSize();
     float aspectRatio = (float)drawableSize.width / (float)drawableSize.height;
-    float fov  = glm::radians(60.0f);   
-    float nearZ = 0.1f;
-    float farZ  = 100.0f;
-    glm::mat4 perspectiveMatrix = glm::perspective(fov, aspectRatio, nearZ, farZ);
-    glm::mat4 MVP_GLM = perspectiveMatrix * viewMatrix * model;
+    glm::mat4 perspectiveMatrix = glm::perspective(glm::radians(60.0f), aspectRatio, 0.1f, 5000.0f);
 
-    MVP mvp1;
-    mvp1.MVP = matrix_float4x4({
-        simd::float4{ MVP_GLM[0][0], MVP_GLM[0][1], MVP_GLM[0][2], MVP_GLM[0][3] },
-        simd::float4{ MVP_GLM[1][0], MVP_GLM[1][1], MVP_GLM[1][2], MVP_GLM[1][3] },
-        simd::float4{ MVP_GLM[2][0], MVP_GLM[2][1], MVP_GLM[2][2], MVP_GLM[2][3] },
-        simd::float4{ MVP_GLM[3][0], MVP_GLM[3][1], MVP_GLM[3][2], MVP_GLM[3][3] },
-    });
-    memcpy(transformationBuffer->contents(), &mvp1, sizeof(MVP));
-    MTL::CommandBuffer* pCmd = _pCommandQueue->commandBuffer();
-    if (!pCmd) {
-        __builtin_printf("ERROR: commandBuffer is nil\n");
-        pPool->release();
-        return;
+    
+    glm::mat4 VP = perspectiveMatrix * viewMatrix;
+
+    MVP* pInstanceData = reinterpret_cast<MVP*>(pInstanceDataBuffer->contents());
+
+    for (size_t i = 0; i < kNumInstances; ++i)
+    {
+        glm::mat4 model = glm::translate(glm::mat4(1.0f), instancePositions[i]);
+        model = glm::rotate(model, angleInRadians, glm::vec3(0.0f, 1.0f, 0.0f));
+        model = glm::scale(model,glm::vec3(1,1,1) ) ;
+        
+
+        glm::mat4 MVP_GLM = VP * model;
+
+        pInstanceData[i].MVP = matrix_float4x4({
+            simd::float4{ MVP_GLM[0][0], MVP_GLM[0][1], MVP_GLM[0][2], MVP_GLM[0][3] },
+            simd::float4{ MVP_GLM[1][0], MVP_GLM[1][1], MVP_GLM[1][2], MVP_GLM[1][3] },
+            simd::float4{ MVP_GLM[2][0], MVP_GLM[2][1], MVP_GLM[2][2], MVP_GLM[2][3] },
+            simd::float4{ MVP_GLM[3][0], MVP_GLM[3][1], MVP_GLM[3][2], MVP_GLM[3][3] },
+        });
     }
+
+    
+    MTL::CommandBuffer* pCmd = _pCommandQueue->commandBuffer();
+    if (!pCmd) { pPool->release(); return; }
+
+    dispatch_semaphore_wait(_semaphore, DISPATCH_TIME_FOREVER);
+    pCmd->addCompletedHandler([this](MTL::CommandBuffer*){
+        dispatch_semaphore_signal(_semaphore);
+    });
 
     MTL::RenderPassDescriptor* pRpd = pView->currentRenderPassDescriptor();
-    if (!pRpd) {
-        __builtin_printf("ERROR: currentRenderPassDescriptor is nil\n");
-        pCmd->commit();
-        pPool->release();
-        return;
-    }
+    if (!pRpd) { pCmd->commit(); pPool->release(); return; }
 
     MTL::RenderCommandEncoder* pEnc = pCmd->renderCommandEncoder(pRpd);
-    if (!pEnc) {
-        __builtin_printf("ERROR: renderCommandEncoder is nil\n");
-        pCmd->commit();
-        pPool->release();
-        return;
-    }
+    if (!pEnc) { pCmd->commit(); pPool->release(); return; }
 
     pEnc->setRenderPipelineState(_pPSO);
     pEnc->setDepthStencilState(depthStencilState);
-
-    pEnc->setVertexBuffer(cubeVertexBuffer,      0, 0);  
-    pEnc->setVertexBuffer(UniformBuffer,         0, 1);  
-    pEnc->setVertexBuffer(transformationBuffer,  0, 2);  
-
+    pEnc->setVertexBuffer(cubeVertexBuffer,    0, 0);
+    pEnc->setVertexBuffer(pInstanceDataBuffer, 0, 1);
     pEnc->setFragmentTexture(grassTexture->texture, 0);
-
-    pEnc->drawPrimitives(MTL::PrimitiveTypeTriangle, NS::UInteger(0), NS::UInteger(36));
+    pEnc->drawPrimitives(MTL::PrimitiveTypeTriangle,
+        NS::UInteger(0), NS::UInteger(36), NS::UInteger(kNumInstances));
 
     pEnc->endEncoding();
     pCmd->presentDrawable(pView->currentDrawable());
     pCmd->commit();
-
     pPool->release();
 }
