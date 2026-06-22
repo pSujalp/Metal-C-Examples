@@ -9,6 +9,7 @@ using namespace simd;
 struct VertexData {
     float4 position;
     float2 textureCoordinate;
+    float3 color;
 };
 
 struct Uniforms
@@ -25,16 +26,9 @@ struct Uniforms1
 
 
 struct VertexOut {
-    // The [[position]] attribute of this member indicates that this value
-    // is the clip space position of the vertex when this structure is
-    // returned from the vertex function.
     float4 position [[position]];
-
-    // Since this member does not have a special attribute, the rasterizer
-    // interpolates its value with the values of the other triangle vertices
-    // and then passes the interpolated value to the fragment shader for each
-    // fragment in the triangle.
     float2 textureCoordinate;
+    float3 color;
 };
 
 vertex VertexOut vertexShader(uint vertexID [[vertex_id]],
@@ -46,8 +40,8 @@ vertex VertexOut vertexShader(uint vertexID [[vertex_id]],
         out.position = vertexData[vertexID].position + float4(uniforms.time,0,0);
     }
     else out.position = vertexData[vertexID].position ;
-    
     out.textureCoordinate = vertexData[vertexID].textureCoordinate;
+    out.color =vertexData[vertexID].color;
     return out;
 }
 
@@ -58,5 +52,6 @@ fragment float4 fragmentShader(VertexOut in [[stage_in]],
                                       min_filter::linear);
     const float4 colorSample = colorTexture.sample(textureSampler, in.textureCoordinate);
     const float4 colorSample1 = colorTexture1.sample(textureSampler, in.textureCoordinate);
-    return mix(colorSample,colorSample1,0.10f);
+
+    return mix(colorSample,colorSample1,0.10f) * float4(in.color,1.0f);
 }

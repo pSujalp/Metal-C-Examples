@@ -128,13 +128,15 @@ void Renderer::buildShaders()
 
 void Renderer::createSquare() {
 
-    VertexData squareVertices[] {
-        {{-0.5, -0.5,  0.5, 1.0f}, {0.0f, 0.0f}},
-        {{-0.5,  0.5,  0.5, 1.0f}, {0.0f, 1.0f}},
-        {{ 0.5,  0.5,  0.5, 1.0f}, {1.0f, 1.0f}},
-        {{-0.5, -0.5,  0.5, 1.0f}, {0.0f, 0.0f}},
-        {{ 0.5,  0.5,  0.5, 1.0f}, {1.0f, 1.0f}},
-        {{ 0.5, -0.5,  0.5, 1.0f}, {1.0f, 0.0f}}
+    VertexData squareVertices[] = {
+        // First triangle
+        {{-0.5f, -0.5f,  0.5f, 1.0f}, {0.0f, 0.0f}, {1.0f, 0.0f, 0.0f}},
+        {{-0.5f,  0.5f,  0.5f, 1.0f}, {0.0f, 1.0f}, {0.0f, 1.0f, 0.0f}},
+        {{ 0.5f,  0.5f,  0.5f, 1.0f}, {1.0f, 1.0f}, {0.0f, 1.0f, 1.0f}},
+
+        {{-0.5f, -0.5f,  0.5f, 1.0f}, {0.0f, 0.0f}, {0.0f, 1.0f, 0.0f}},
+        {{ 0.5f,  0.5f,  0.5f, 1.0f}, {1.0f, 1.0f}, {0.0f, 1.0f, 0.0f}},
+        {{ 0.5f, -0.5f,  0.5f, 1.0f}, {1.0f, 0.0f}, {1.0f, 1.0f, 0.0f}},
     };
     
     squareVertexBuffer = _pDevice->newBuffer(&squareVertices, sizeof(squareVertices), MTL::ResourceStorageModeShared);
