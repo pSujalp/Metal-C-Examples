@@ -35,8 +35,8 @@ Texture::~Texture() {
 CubeTexture::CubeTexture(const char* facePaths[6], MTL::Device* metalDevice) {
     device = metalDevice;
 
-    // Do NOT flip — flipping breaks cubemap seams
-    stbi_set_flip_vertically_on_load(true);
+   
+    stbi_set_flip_vertically_on_load(false);
 
     int faceSize = 0;
     unsigned char* faces[6] = {};

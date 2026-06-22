@@ -3,26 +3,26 @@
 #include "Shader.h"
 
 
-// 36 explicit triangle verts (6 faces × 2 tris × 3 verts)
-// xyz = cubemap sample direction, viewed from INSIDE the cube
+
+
 static const simd::float4 cubeVertexData[] =
 {
-    // +X (right)
+    
     { 1.0f, -1.0f,  1.0f, 1.0f}, { 1.0f, -1.0f, -1.0f, 1.0f}, { 1.0f,  1.0f, -1.0f, 1.0f},
     { 1.0f,  1.0f, -1.0f, 1.0f}, { 1.0f,  1.0f,  1.0f, 1.0f}, { 1.0f, -1.0f,  1.0f, 1.0f},
-    // -X (left)
+    
     {-1.0f, -1.0f, -1.0f, 1.0f}, {-1.0f, -1.0f,  1.0f, 1.0f}, {-1.0f,  1.0f,  1.0f, 1.0f},
     {-1.0f,  1.0f,  1.0f, 1.0f}, {-1.0f,  1.0f, -1.0f, 1.0f}, {-1.0f, -1.0f, -1.0f, 1.0f},
-    // +Y (top)
+    
     {-1.0f,  1.0f,  1.0f, 1.0f}, { 1.0f,  1.0f,  1.0f, 1.0f}, { 1.0f,  1.0f, -1.0f, 1.0f},
     { 1.0f,  1.0f, -1.0f, 1.0f}, {-1.0f,  1.0f, -1.0f, 1.0f}, {-1.0f,  1.0f,  1.0f, 1.0f},
-    // -Y (bottom)
+    
     {-1.0f, -1.0f, -1.0f, 1.0f}, { 1.0f, -1.0f, -1.0f, 1.0f}, { 1.0f, -1.0f,  1.0f, 1.0f},
     { 1.0f, -1.0f,  1.0f, 1.0f}, {-1.0f, -1.0f,  1.0f, 1.0f}, {-1.0f, -1.0f, -1.0f, 1.0f},
-    // +Z (front)
+    
     {-1.0f, -1.0f,  1.0f, 1.0f}, { 1.0f, -1.0f,  1.0f, 1.0f}, { 1.0f,  1.0f,  1.0f, 1.0f},
     { 1.0f,  1.0f,  1.0f, 1.0f}, {-1.0f,  1.0f,  1.0f, 1.0f}, {-1.0f, -1.0f,  1.0f, 1.0f},
-    // -Z (back)
+    
     { 1.0f, -1.0f, -1.0f, 1.0f}, {-1.0f, -1.0f, -1.0f, 1.0f}, {-1.0f,  1.0f, -1.0f, 1.0f},
     {-1.0f,  1.0f, -1.0f, 1.0f}, { 1.0f,  1.0f, -1.0f, 1.0f}, { 1.0f, -1.0f, -1.0f, 1.0f},
 };
@@ -194,42 +194,42 @@ void Renderer::buildSkyBoxShaders()
 void Renderer::CreateCube()
 {
     VertexData cubeVertices[] = {
-        // Front
+        
         {{-0.5, -0.5,  0.5, 1.0}, {0.0, 0.0}},
         {{ 0.5, -0.5,  0.5, 1.0}, {1.0, 0.0}},
         {{ 0.5,  0.5,  0.5, 1.0}, {1.0, 1.0}},
         {{ 0.5,  0.5,  0.5, 1.0}, {1.0, 1.0}},
         {{-0.5,  0.5,  0.5, 1.0}, {0.0, 1.0}},
         {{-0.5, -0.5,  0.5, 1.0}, {0.0, 0.0}},
-        // Back
+        
         {{ 0.5, -0.5, -0.5, 1.0}, {0.0, 0.0}},
         {{-0.5, -0.5, -0.5, 1.0}, {1.0, 0.0}},
         {{-0.5,  0.5, -0.5, 1.0}, {1.0, 1.0}},
         {{-0.5,  0.5, -0.5, 1.0}, {1.0, 1.0}},
         {{ 0.5,  0.5, -0.5, 1.0}, {0.0, 1.0}},
         {{ 0.5, -0.5, -0.5, 1.0}, {0.0, 0.0}},
-        // Top
+        
         {{-0.5,  0.5,  0.5, 1.0}, {0.0, 0.0}},
         {{ 0.5,  0.5,  0.5, 1.0}, {1.0, 0.0}},
         {{ 0.5,  0.5, -0.5, 1.0}, {1.0, 1.0}},
         {{ 0.5,  0.5, -0.5, 1.0}, {1.0, 1.0}},
         {{-0.5,  0.5, -0.5, 1.0}, {0.0, 1.0}},
         {{-0.5,  0.5,  0.5, 1.0}, {0.0, 0.0}},
-        // Bottom
+        
         {{-0.5, -0.5, -0.5, 1.0}, {0.0, 0.0}},
         {{ 0.5, -0.5, -0.5, 1.0}, {1.0, 0.0}},
         {{ 0.5, -0.5,  0.5, 1.0}, {1.0, 1.0}},
         {{ 0.5, -0.5,  0.5, 1.0}, {1.0, 1.0}},
         {{-0.5, -0.5,  0.5, 1.0}, {0.0, 1.0}},
         {{-0.5, -0.5, -0.5, 1.0}, {0.0, 0.0}},
-        // Left
+        
         {{-0.5, -0.5, -0.5, 1.0}, {0.0, 0.0}},
         {{-0.5, -0.5,  0.5, 1.0}, {1.0, 0.0}},
         {{-0.5,  0.5,  0.5, 1.0}, {1.0, 1.0}},
         {{-0.5,  0.5,  0.5, 1.0}, {1.0, 1.0}},
         {{-0.5,  0.5, -0.5, 1.0}, {0.0, 1.0}},
         {{-0.5, -0.5, -0.5, 1.0}, {0.0, 0.0}},
-        // Right
+        
         {{ 0.5, -0.5,  0.5, 1.0}, {0.0, 0.0}},
         {{ 0.5, -0.5, -0.5, 1.0}, {1.0, 0.0}},
         {{ 0.5,  0.5, -0.5, 1.0}, {1.0, 1.0}},
@@ -248,22 +248,22 @@ void Renderer::CreateCube()
 void Renderer::CreateSkyBox()
 {
     static const simd::float4 skyboxVerts[] = {
-        // +X
+        
         { 1.0f, -1.0f,  1.0f, 1.0f}, { 1.0f, -1.0f, -1.0f, 1.0f}, { 1.0f,  1.0f, -1.0f, 1.0f},
         { 1.0f,  1.0f, -1.0f, 1.0f}, { 1.0f,  1.0f,  1.0f, 1.0f}, { 1.0f, -1.0f,  1.0f, 1.0f},
-        // -X
+        
         {-1.0f, -1.0f, -1.0f, 1.0f}, {-1.0f, -1.0f,  1.0f, 1.0f}, {-1.0f,  1.0f,  1.0f, 1.0f},
         {-1.0f,  1.0f,  1.0f, 1.0f}, {-1.0f,  1.0f, -1.0f, 1.0f}, {-1.0f, -1.0f, -1.0f, 1.0f},
-        // +Y
+        
         {-1.0f,  1.0f,  1.0f, 1.0f}, { 1.0f,  1.0f,  1.0f, 1.0f}, { 1.0f,  1.0f, -1.0f, 1.0f},
         { 1.0f,  1.0f, -1.0f, 1.0f}, {-1.0f,  1.0f, -1.0f, 1.0f}, {-1.0f,  1.0f,  1.0f, 1.0f},
-        // -Y
+        
         {-1.0f, -1.0f, -1.0f, 1.0f}, { 1.0f, -1.0f, -1.0f, 1.0f}, { 1.0f, -1.0f,  1.0f, 1.0f},
         { 1.0f, -1.0f,  1.0f, 1.0f}, {-1.0f, -1.0f,  1.0f, 1.0f}, {-1.0f, -1.0f, -1.0f, 1.0f},
-        // +Z
+        
         {-1.0f, -1.0f,  1.0f, 1.0f}, { 1.0f, -1.0f,  1.0f, 1.0f}, { 1.0f,  1.0f,  1.0f, 1.0f},
         { 1.0f,  1.0f,  1.0f, 1.0f}, {-1.0f,  1.0f,  1.0f, 1.0f}, {-1.0f, -1.0f,  1.0f, 1.0f},
-        // -Z
+        
         { 1.0f, -1.0f, -1.0f, 1.0f}, {-1.0f, -1.0f, -1.0f, 1.0f}, {-1.0f,  1.0f, -1.0f, 1.0f},
         {-1.0f,  1.0f, -1.0f, 1.0f}, { 1.0f,  1.0f, -1.0f, 1.0f}, { 1.0f, -1.0f, -1.0f, 1.0f},
     };
@@ -281,12 +281,12 @@ void Renderer::draw(MTK::View* pView)
 {
     NS::AutoreleasePool* pPool = NS::AutoreleasePool::alloc()->init();
 
-    // ── Uniforms ──────────────────────────────────────────────────────────────
+    
     Uniforms uniforms;
     uniforms.time = {0.1f, 0.3f};
     memcpy(UniformBuffer->contents(), &uniforms, sizeof(Uniforms));
 
-    // ── Shared view/projection ────────────────────────────────────────────────
+    
     glm::mat4 viewMatrix = glm::lookAt(
         glm::vec3(0.0f, 0.0f, 5.0f),
         glm::vec3(0.0f, 0.0f, 0.0f),
@@ -296,7 +296,7 @@ void Renderer::draw(MTK::View* pView)
     float aspect       = (float)drawableSize.width / (float)drawableSize.height;
     glm::mat4 proj     = glm::perspective(glm::radians(60.0f), aspect, 0.1f, 100.0f);
 
-    // ── Cube MVP ──────────────────────────────────────────────────────────────
+    
     glm::mat4 model = glm::mat4(1.0f);
     model = glm::translate(model, glm::vec3(0.0f, 1.0f, -1.0f));
     static float deg = 0.0f;
@@ -314,7 +314,7 @@ void Renderer::draw(MTK::View* pView)
     });
     memcpy(transformationBuffer->contents(), &mvp1, sizeof(MVP));
 
-    // ── Skybox MVP ────────────────────────────────────────────────────────────
+    
     static float skyboxDeg = 0.0f;
     skyboxDeg += 1.0f * Time::DeltaTime;
     if (skyboxDeg >= 360.0f) skyboxDeg -= 360.0f;
@@ -332,7 +332,7 @@ void Renderer::draw(MTK::View* pView)
     });
     memcpy(MVPSkyBoxBuffer->contents(), &mvpSkybox, sizeof(MVP));
 
-    // ── Command buffer ────────────────────────────────────────────────────────
+    
     MTL::CommandBuffer* pCmd = _pCommandQueue->commandBuffer();
     if (!pCmd) {
         __builtin_printf("ERROR: commandBuffer is nil\n");
@@ -356,21 +356,21 @@ void Renderer::draw(MTK::View* pView)
         return;
     }
 
-    // ── 1. Draw skybox first (depth write disabled — fills background) ────────
+    
     pEnc->setRenderPipelineState(_SkyboxPSO);
     pEnc->setDepthStencilState(SkyBoxDepthStencilState);
-    pEnc->setVertexBuffer(SkyBoxVertexBuffer, 0, 0);  // buffer(0): positions
-    pEnc->setVertexBuffer(MVPSkyBoxBuffer,    0, 2);  // buffer(2): MVP
+    pEnc->setVertexBuffer(SkyBoxVertexBuffer, 0, 0);  
+    pEnc->setVertexBuffer(MVPSkyBoxBuffer,    0, 2);  
     pEnc->setFragmentTexture(skyboxTexture->texture, 0);
-    pEnc->drawPrimitives(MTL::PrimitiveTypeTriangle,  // explicit tris, NOT strip
+    pEnc->drawPrimitives(MTL::PrimitiveTypeTriangle,  
                          NS::UInteger(0), NS::UInteger(36));
 
-    // ── 2. Draw cube on top ───────────────────────────────────────────────────
+    
     pEnc->setRenderPipelineState(_pPSO);
     pEnc->setDepthStencilState(depthStencilState);
-    pEnc->setVertexBuffer(cubeVertexBuffer,     0, 0);  // buffer(0): VertexData
-    pEnc->setVertexBuffer(UniformBuffer,        0, 1);  // buffer(1): Uniforms
-    pEnc->setVertexBuffer(transformationBuffer, 0, 2);  // buffer(2): MVP
+    pEnc->setVertexBuffer(cubeVertexBuffer,     0, 0);  
+    pEnc->setVertexBuffer(UniformBuffer,        0, 1);  
+    pEnc->setVertexBuffer(transformationBuffer, 0, 2);  
     pEnc->setFragmentTexture(grassTexture->texture, 0);
     pEnc->drawPrimitives(MTL::PrimitiveTypeTriangle,
                          NS::UInteger(0), NS::UInteger(36));
