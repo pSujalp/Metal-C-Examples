@@ -47,8 +47,10 @@ void Renderer::draw( MTK::View* pView )
     MTL::RenderPassDescriptor* pRpd = pView->currentRenderPassDescriptor();
     MTL::RenderCommandEncoder* pEnc = pCmd->renderCommandEncoder( pRpd );
 
+
+     pEnc->setDepthStencilState(depthStencilState);
     pEnc->setRenderPipelineState(_pPSO);
-    pEnc->setDepthStencilState(depthStencilState);
+   
 
     pEnc->setVertexBuffer(cubeVertexBuffer,      0, 0);  
  
@@ -100,12 +102,9 @@ Renderer::~Renderer()
     pDesc->setFragmentFunction( pFragFn );
     pDesc->colorAttachments()->object(0)->setPixelFormat( MTL::PixelFormat::PixelFormatBGRA8Unorm_sRGB );
     pDesc->setDepthAttachmentPixelFormat(MTL::PixelFormatDepth32Float);
-
-
-
     MTL::DepthStencilDescriptor* depthStencilDescriptor =
         MTL::DepthStencilDescriptor::alloc()->init();
-    depthStencilDescriptor->setDepthCompareFunction(MTL::CompareFunctionLessEqual);
+    depthStencilDescriptor->setDepthCompareFunction(MTL::CompareFunctionLess);
     depthStencilDescriptor->setDepthWriteEnabled(true);
     depthStencilState = _pDevice->newDepthStencilState(depthStencilDescriptor);
     depthStencilDescriptor->release();
@@ -117,13 +116,10 @@ Renderer::~Renderer()
         __builtin_printf( "%s", pError->localizedDescription()->utf8String() );
         assert( false );
     }
-
     pVertexFn->release();
     pFragFn->release();
     pDesc->release();
     pLibrary->release();
-    
-    
 }
 
 
